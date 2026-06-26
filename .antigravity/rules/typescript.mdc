@@ -1,0 +1,31 @@
+---
+description: Reglas de TypeScript para FleetIQ
+globs: **/*.ts, **/*.tsx
+---
+
+# Reglas TypeScript
+
+## Reglas estrictas
+- NUNCA usar el tipo 'any'. Alternativas: unknown, tipos especificos, genericos
+- Siempre tipar los parametros y el retorno de funciones async
+- Usar interfaces para objetos de dominio, type para uniones y utilitarios
+
+## Tipos de dominio
+- Cada modulo define sus tipos en modules/[dominio]/types.ts
+- Usar sufijos: Ruta (lectura), RutaInsert (creacion), RutaUpdate (edicion)
+- Los tipos deben reflejar exactamente el schema de Supabase
+
+## Ejemplo de tipos de un modulo
+  export type RutaEstado = 'pendiente' | 'en_curso' | 'completada' | 'cancelada'
+
+  export interface Ruta {
+    id: string
+    empresa_id: string
+    origen: string
+    destino: string
+    estado: RutaEstado
+    created_at: string
+  }
+
+  export type RutaInsert = Omit<Ruta, 'id' | 'created_at'>
+  export type RutaUpdate = Partial<RutaInsert>

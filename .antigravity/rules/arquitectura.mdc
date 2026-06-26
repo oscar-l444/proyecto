@@ -1,0 +1,35 @@
+---
+description: Arquitectura Fullstack Modular y Repository Pattern
+globs: **/*
+---
+
+# Arquitectura FleetIQ
+
+## Arquitectura: Fullstack Modular por Dominio
+El proyecto usa arquitectura modular por dominio (Feature-based).
+Cada dominio tiene su propia carpeta en modules/ con esta estructura:
+  modules/[dominio]/
+    components/   <- UI del modulo
+    hooks/        <- Logica React del modulo
+    repository/   <- Acceso a Supabase (UNICO punto de acceso a BD)
+    types.ts      <- Tipos TypeScript del modulo
+
+## Patron de diseno: Repository Pattern
+REGLA CRITICA: ningun componente, pagina ni hook debe importar
+o llamar a Supabase directamente.
+TODO acceso a la base de datos debe pasar por el repositorio del modulo.
+
+Flujo obligatorio:
+  UI Component -> Server Action (actions.ts) -> Repository -> Supabase
+
+## Reglas de capas
+- Los Server Components obtienen datos llamando al repositorio directamente
+- Los Client Components usan hooks para manejar estado local
+- Las Server Actions validan datos y llaman al repositorio
+- Los repositorios son los UNICOS que importan createServerClient de supabase
+
+## Prohibiciones
+- NUNCA importar supabase directamente en un componente o pagina
+- NUNCA mezclar logica de servidor y cliente en el mismo archivo
+- NUNCA crear archivos fuera de la estructura de modulos definida
+- NUNCA usar 'any' en TypeScript

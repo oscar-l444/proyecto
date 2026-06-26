@@ -1,0 +1,23 @@
+---
+description: Reglas generales del proyecto FleetIQ
+globs: **/*
+---
+
+# FleetIQ - Reglas Generales
+
+## Descripcion del proyecto
+FleetIQ es una plataforma SaaS de gestion de flotillas para empresas
+de logistica. Stack: Next.js 14, TypeScript, Tailwind CSS, Supabase.
+
+## Nomenclatura
+- Componentes React: PascalCase (RutasTable, VehiculoCard)
+- Hooks: camelCase con prefijo use (useRutas, useVehiculos)
+- Repositorios: camelCase con sufijo .repository (rutas.repository.ts)
+- Tipos: PascalCase con sufijo del dominio (Ruta, RutaInsert, RutaUpdate)
+- Archivos de pagina: siempre page.tsx dentro de su carpeta de ruta
+- Server Actions: siempre en actions.ts dentro de la carpeta de la ruta
+
+## Idioma
+- Codigo (variables, funciones, tipos): ingles
+- Comentarios y documentacion: espanol
+- Textos de UI visibles al usuario: espanol

@@ -1,0 +1,177 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  OPERACIONES
+  SUPERVISOR
+  CONDUCTOR
+  CAPTURISTA
+}
+
+enum VehicleStatus {
+  ACTIVO
+  MANTENIMIENTO
+  INACTIVO
+}
+
+enum DriverStatus {
+  DISPONIBLE
+  OCUPADO
+  INACTIVO
+}
+
+enum RouteStatus {
+  PROGRAMADA
+  EN_TRANSITO
+  COMPLETADA
+  CANCELADA
+}
+
+enum Severity {
+  BAJA
+  MEDIA
+  ALTA
+}
+
+enum MaintenanceStatus {
+  PENDIENTE
+  COMPLETADO
+}
+
+model Organization {
+  id          String        @id @default(uuid())
+  name        String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  users       UserProfile[]
+  vehicles    Vehicle[]
+  drivers     Driver[]
+  routes      Route[]
+  incidents   Incident[]
+  maintenance Maintenance[]
+}
+
+model UserProfile {
+  id             String         @id // User UUID from Supabase Auth
+  email          String         @unique
+  role           Role           @default(CAPTURISTA)
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  notifications  Notification[]
+  drivers        Driver[]       // Linked drivers in case of conductor role
+
+  @@index([organizationId])
+}
+
+model Vehicle {
+  id             String        @id @default(uuid())
+  plates         String        @unique
+  brand          String
+  model          String
+  year           Int
+  status         VehicleStatus @default(ACTIVO)
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  routes         Route[]
+  maintenance    Maintenance[]
+
+  @@index([organizationId])
+}
+
+model Driver {
+  id                String        @id @default(uuid())
+  name              String
+  licenseNumber     String
+  licenseExpiration DateTime
+  status            DriverStatus  @default(DISPONIBLE)
+  userId            String?       // Link to UserProfile if this driver has login credentials
+  user              UserProfile?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  organizationId    String
+  organization      Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  routes            Route[]
+
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model Route {
+  id             String       @id @default(uuid())
+  origin         String
+  destination    String
+  status         RouteStatus  @default(PROGRAMADA)
+  estimatedDate  DateTime
+  vehicleId      String
+  vehicle        Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  driverId       String
+  driver         Driver       @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  incidents      Incident[]
+
+  @@index([organizationId])
+  @@index([vehicleId])
+  @@index([driverId])
+}
+
+model Incident {
+  id             String       @id @default(uuid())
+  routeId        String
+  route          Route        @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  description    String
+  reportedAt     DateTime     @default(now())
+  evidenceUrl    String?
+  severity       Severity     @default(BAJA)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([routeId])
+}
+
+model Maintenance {
+  id             String            @id @default(uuid())
+  vehicleId      String
+  vehicle        Vehicle           @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  description    String
+  date           DateTime
+  cost           Float
+  status         MaintenanceStatus @default(PENDIENTE)
+  organizationId String
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([organizationId])
+  @@index([vehicleId])
+}
+
+model Notification {
+  id        String      @id @default(uuid())
+  userId    String
+  user      UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  read      Boolean     @default(false)
+  type      String      // e.g. "maintenance", "incident", "route"
+  createdAt DateTime    @default(now())
+
+  @@index([userId])
+}

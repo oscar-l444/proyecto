@@ -1,0 +1,30 @@
+---
+description: Convenciones de Next.js 14 con App Router
+globs: app/**/*
+---
+
+# Reglas Next.js 14 - App Router
+
+## Server vs Client Components
+- Por defecto todos los componentes son Server Components (sin directiva)
+- Solo agregar 'use client' cuando el componente necesite:
+  estado (useState), efectos (useEffect), eventos del navegador o hooks
+- Los Server Components pueden llamar repositorios directamente (son servidor)
+- Los Client Components NUNCA llaman repositorios directamente
+
+## Server Actions
+- Siempre en el archivo actions.ts de la carpeta de ruta correspondiente
+- Siempre empezar con la directiva 'use server'
+- Siempre llamar revalidatePath() despues de mutaciones exitosas
+- Siempre manejar errores con try/catch y retornar { error: string }
+
+## Rutas y paginas
+- Rutas dinamicas: usar [id]/page.tsx
+- Grupos de rutas: usar (nombre)/ para agrupar sin afectar la URL
+- Loading states: crear loading.tsx junto a cada page.tsx compleja
+- Error boundaries: crear error.tsx en rutas criticas
+
+## Layouts
+- El layout de (dashboard) contiene Sidebar y Navbar
+- No duplicar logica de autenticacion en cada pagina;
+  el middleware.ts la maneja globalmente
