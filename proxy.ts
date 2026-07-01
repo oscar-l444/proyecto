@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_ROUTES = ["/login", "/forgot-password"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -30,7 +30,12 @@ export async function middleware(request: NextRequest) {
             request,
           });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, {
+              ...options,
+              secure: process.env.NODE_ENV === "production",
+              httpOnly: true,
+              sameSite: "lax",
+            })
           );
         },
       },
@@ -49,10 +54,21 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute = path.startsWith("/dashboard") || path.startsWith("/api");
 
   if (!user && isProtectedRoute && !isPublicRoute) {
+    if (path.startsWith("/api")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     redirectUrl.searchParams.set("redirectTo", path);
     return NextResponse.redirect(redirectUrl);
+  }
+
+  // Set CORS headers for API routes
+  if (path.startsWith("/api")) {
+    const origin = process.env.NEXT_PUBLIC_CORS_ORIGIN || "*";
+    supabaseResponse.headers.set("Access-Control-Allow-Origin", origin);
+    supabaseResponse.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    supabaseResponse.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   }
 
   return supabaseResponse;
